@@ -5,6 +5,7 @@ import Root from './Components/Root'
 import Layout from './Components/Layout'
 import Introduction from './Views/Introduction'
 import Usage from './Views/Usage'
+import LayoutsExample from './Components/LayoutsExample/LayoutsExample'
 import PageNotFound from './Views/PageNotFound'
 
 const routes = (
@@ -13,6 +14,7 @@ const routes = (
 
     <Route path='introduction' component={Introduction} />
     <Route path='usage' component={Usage} />
+    <Route path='layouts' component={LayoutsExample} />
     <Route path=':type/:name' component={Root} />
     <Route path='*' component={PageNotFound} />
   </Route>
