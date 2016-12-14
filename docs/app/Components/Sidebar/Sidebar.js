@@ -193,6 +193,9 @@ export default class Sidebar extends Component {
             <Menu.Item as={Link} to='/usage' activeClassName='active'>
               Usage
             </Menu.Item>
+            <Menu.Item as={Link} to='/layouts' activeClassName='active'>
+              Layouts
+            </Menu.Item>
             <Menu.Item as='a' href={repoURL}>
               <Icon name='github' /> GitHub
             </Menu.Item>
