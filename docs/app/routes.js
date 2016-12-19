@@ -6,7 +6,7 @@ import Layout from './Components/Layout'
 import Introduction from './Views/Introduction'
 import Usage from './Views/Usage'
 import Layouts from './Views/Layouts'
-import LoginForm from './Examples/layouts/LoginForm'
+import LoginForm from './layouts/LoginForm'
 import PageNotFound from './Views/PageNotFound'
 
 const routes = (
