@@ -1,11 +1,11 @@
-import _ from 'lodash'
 import faker from 'faker'
+import _ from 'lodash'
 import React from 'react'
-import * as common from 'test/specs/commonTests'
-import { sandbox } from 'test/utils'
 
 import ListItem from 'src/elements/List/ListItem'
 import ListContent from 'src/elements/List/ListContent'
+import * as common from 'test/specs/commonTests'
+import { sandbox } from 'test/utils'
 
 describe('ListItem', () => {
   common.isConformant(ListItem)
@@ -77,6 +77,25 @@ describe('ListItem', () => {
         wrapper.find('Image').should.have.lengthOf(1)
         wrapper.find('ListContent').should.have.lengthOf(1)
       })
+    })
+  })
+
+  describe('role', () => {
+    it('adds role=listitem', () => {
+      shallow(<ListItem />)
+        .should.have.prop('role', 'listitem')
+    })
+    it('adds role=listitem with children', () => {
+      shallow(<ListItem><div>Test</div></ListItem>)
+        .should.have.prop('role', 'listitem')
+    })
+    it('adds role=listitem with content', () => {
+      shallow(<ListItem content={<div />} />)
+        .should.have.prop('role', 'listitem')
+    })
+    it('adds role=listitem with icon', () => {
+      shallow(<ListItem icon='user' />)
+        .should.have.prop('role', 'listitem')
     })
   })
 })

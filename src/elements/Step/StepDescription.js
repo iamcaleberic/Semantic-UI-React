@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import cx from 'classnames'
 import React, { PropTypes } from 'react'
 
@@ -10,11 +11,15 @@ import {
 
 function StepDescription(props) {
   const { children, className, description } = props
-  const classes = cx(className, 'description')
+  const classes = cx('description', className)
   const rest = getUnhandledProps(StepDescription, props)
   const ElementType = getElementType(StepDescription, props)
 
-  return <ElementType {...rest} className={classes}>{children || description}</ElementType>
+  return (
+    <ElementType {...rest} className={classes}>
+      {_.isNil(children) ? description : children}
+    </ElementType>
+  )
 }
 
 StepDescription._meta = {

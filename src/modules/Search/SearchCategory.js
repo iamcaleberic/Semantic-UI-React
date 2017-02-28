@@ -1,5 +1,5 @@
-import React, { PropTypes } from 'react'
 import cx from 'classnames'
+import React, { PropTypes } from 'react'
 
 import {
   customPropTypes,
@@ -59,7 +59,7 @@ SearchCategory.propTypes = {
    */
   renderer: PropTypes.func,
 
-  /** Array of Search.Result props */
+  /** Array of Search.Result props. */
   results: PropTypes.array,
 }
 

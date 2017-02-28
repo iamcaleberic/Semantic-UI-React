@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -8,13 +9,20 @@ import {
   META,
 } from '../../lib'
 
+/**
+ * A statistic can contain a label to help provide context for the presented value.
+ */
 function StatisticLabel(props) {
   const { children, className, label } = props
-  const classes = cx(className, 'label')
+  const classes = cx('label', className)
   const rest = getUnhandledProps(StatisticLabel, props)
   const ElementType = getElementType(StatisticLabel, props)
 
-  return <ElementType {...rest} className={classes}>{children || label}</ElementType>
+  return (
+    <ElementType {...rest} className={classes}>
+      {_.isNil(children) ? label : children}
+    </ElementType>
+  )
 }
 
 StatisticLabel._meta = {

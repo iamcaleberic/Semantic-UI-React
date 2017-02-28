@@ -1,8 +1,9 @@
-import _ from 'lodash'
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { Component, PropTypes } from 'react'
 
 import {
+  createShorthandFactory,
   customPropTypes,
   getElementType,
   getUnhandledProps,
@@ -13,17 +14,9 @@ import {
 } from '../../lib'
 import Icon from '../../elements/Icon'
 
-const _meta = {
-  name: 'MenuItem',
-  type: META.TYPES.COLLECTION,
-  parent: 'Menu',
-  props: {
-    color: SUI.COLORS,
-    fitted: ['horizontally', 'vertically'],
-    position: ['right'],
-  },
-}
-
+/**
+ * A menu can contain an item.
+ */
 export default class MenuItem extends Component {
   static propTypes = {
     /** An element type to render as (string or function). */
@@ -39,15 +32,18 @@ export default class MenuItem extends Component {
     className: PropTypes.string,
 
     /** Additional colors can be specified. */
-    color: PropTypes.oneOf(_meta.props.color),
+    color: PropTypes.oneOf(SUI.COLORS),
 
     /** Shorthand for primary content. */
     content: customPropTypes.contentShorthand,
 
+    /** A menu item can be disabled. */
+    disabled: PropTypes.bool,
+
     /** A menu item or menu can remove element padding, vertically or horizontally. */
     fitted: PropTypes.oneOfType([
       PropTypes.bool,
-      PropTypes.oneOf(_meta.props.fitted),
+      PropTypes.oneOf(['horizontally', 'vertically']),
     ]),
 
     /** A menu item may include a header or may itself be a header. */
@@ -78,10 +74,14 @@ export default class MenuItem extends Component {
     onClick: PropTypes.func,
 
     /** A menu item can take right position. */
-    position: PropTypes.oneOf(_meta.props.position),
+    position: PropTypes.oneOf(['right']),
   }
 
-  static _meta = _meta
+  static _meta = {
+    name: 'MenuItem',
+    type: META.TYPES.COLLECTION,
+    parent: 'Menu',
+  }
 
   handleClick = (e) => {
     const { onClick } = this.props
@@ -96,6 +96,7 @@ export default class MenuItem extends Component {
       className,
       color,
       content,
+      disabled,
       fitted,
       header,
       icon,
@@ -109,6 +110,7 @@ export default class MenuItem extends Component {
       color,
       position,
       useKeyOnly(active, 'active'),
+      useKeyOnly(disabled, 'disabled'),
       useKeyOnly(icon === true || icon && !(name || content), 'icon'),
       useKeyOnly(header, 'header'),
       useKeyOnly(link, 'link'),
@@ -121,7 +123,7 @@ export default class MenuItem extends Component {
     })
     const rest = getUnhandledProps(MenuItem, this.props)
 
-    if (children) {
+    if (!_.isNil(children)) {
       return <ElementType {...rest} className={classes} onClick={this.handleClick}>{children}</ElementType>
     }
 
@@ -133,3 +135,5 @@ export default class MenuItem extends Component {
     )
   }
 }
+
+MenuItem.create = createShorthandFactory(MenuItem, val => ({ content: val, name: val }), true)

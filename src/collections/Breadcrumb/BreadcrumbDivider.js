@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -14,14 +15,24 @@ import Icon from '../../elements/Icon'
  * A divider sub-component for Breadcrumb component.
  */
 function BreadcrumbDivider(props) {
-  const { children, content, icon, className } = props
-  const classes = cx(className, 'divider')
+  const {
+    children,
+    className,
+    content,
+    icon,
+  } = props
+
+  const classes = cx('divider', className)
   const rest = getUnhandledProps(BreadcrumbDivider, props)
   const ElementType = getElementType(BreadcrumbDivider, props)
 
-  if (icon) return Icon.create(icon, { ...rest, className: classes })
+  const iconElement = Icon.create(icon, { ...rest, className: classes })
+  if (iconElement) return iconElement
 
-  return <ElementType {...rest} className={classes}>{content || children || '/'}</ElementType>
+  let breadcrumbContent = content
+  if (_.isNil(content)) breadcrumbContent = _.isNil(children) ? '/' : children
+
+  return <ElementType {...rest} className={classes}>{breadcrumbContent}</ElementType>
 }
 
 BreadcrumbDivider._meta = {

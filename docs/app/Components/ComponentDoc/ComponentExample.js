@@ -2,16 +2,15 @@ import * as Babel from 'babel-standalone'
 import _ from 'lodash'
 import React, { Component, createElement, isValidElement, PropTypes } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import html from 'html-beautify'
+import { html } from 'js-beautify'
 import copyToClipboard from 'copy-to-clipboard'
 
 import { exampleContext, repoURL } from 'docs/app/utils'
 import { Divider, Grid, Icon, Header, Menu } from 'src'
 import Editor from 'docs/app/Components/Editor/Editor'
-import babelrc from '.babelrc'
 
 const babelConfig = {
-  presets: [...babelrc.presets],
+  presets: ['es2015', 'react', 'stage-1'],
 }
 
 const showCodeStyle = {
@@ -118,6 +117,7 @@ export default class ComponentExample extends Component {
   }
 
   renderSourceCode = _.debounce(() => {
+    const { examplePath } = this.props
     const { sourceCode } = this.state
     // Heads Up!
     //
@@ -129,6 +129,7 @@ export default class ComponentExample extends Component {
     const LODASH = require('lodash')
     const REACT = require('react')
     const SEMANTIC_UI_REACT = require('semantic-ui-react')
+    let COMMON
     /* eslint-enable no-unused-vars */
 
     // Should use an AST transform here... oh well :/
@@ -136,20 +137,31 @@ export default class ComponentExample extends Component {
     // which can be rendered in this ComponentExample's render() method
 
     // rewrite imports to const statements against the UPPERCASE module names
-    const imports = _.get(/(import[\s\S]*from[\s\S]*['"]\n)/.exec(sourceCode), '[1]', '')
+    const imports = _.get(/(^import[\s\S]*from[\s\S]*['"]\n)/.exec(sourceCode), '[1]', '')
       .replace(/[\s\n]+/g, ' ')         // normalize spaces and make one line
       .replace(/ import/g, '\nimport')  // one import per line
       .split('\n')                      // split lines
-      .filter(l => l.trim() !== '')     // remove empty lines
-      .map(l => {
-        const defaultImport = _.get(/import\s+(\w+)/.exec(l), '[1]')
-        const destructuredImports = _.get(/import.*({[\s\w,}]+)\s+from/.exec(l), '[1]')
-        const module = _.snakeCase(_.get(/import.*from\s+['"]([\w\-_]+)/.exec(l), '[1]', '')).toUpperCase()
+      .filter(Boolean)                  // remove empty lines
+      .map(l => {                       // rewrite imports to const statements
+        const [
+          defaultImport,
+          destructuredImports,
+          _module,
+        ] = _.tail(/import\s+([\w]+)?(?:\s*,\s*)?({[\s\w,]+})?\s+from\s+['"](?:.*\/)?([\w\-_]+)['"]/.exec(l))
 
-        return _.compact([
-          defaultImport && `const ${defaultImport} = ${module}`,
-          destructuredImports && `const ${destructuredImports} = ${module}`,
-        ]).join('\n')
+        const module = _.snakeCase(_module).toUpperCase()
+
+        if (module === 'COMMON') {
+          const componentPath = examplePath.split(__PATH_SEP__).splice(0, 2).join(__PATH_SEP__)
+          COMMON = require(`docs/app/Examples/${componentPath}/common`)
+        }
+
+        const constStatements = []
+        if (defaultImport) constStatements.push(`const ${defaultImport} = ${module}`)
+        if (destructuredImports) constStatements.push(`const ${destructuredImports} = ${module}`)
+        constStatements.push('\n')
+
+        return constStatements.join('\n')
       })
       .join('\n')
 
@@ -233,21 +245,21 @@ export default class ComponentExample extends Component {
       <Divider horizontal>
         <Menu text>
           <Menu.Item
-            active={copied || error} // to show the color
+            active={copied || !!error} // to show the color
             color={copied ? 'green' : color}
             onClick={this.copyJSX}
             icon={!copied && 'copy'}
             content={copied ? 'Copied!' : 'Copy'}
           />
           <Menu.Item
-            active={error} // to show the color
+            active={!!error} // to show the color
             color={color}
             icon='refresh'
             content='Reset'
             onClick={this.resetJSX}
           />
           <Menu.Item
-            active={error} // to show the color
+            active={!!error} // to show the color
             color={color}
             icon='github'
             content='Edit'
@@ -255,7 +267,7 @@ export default class ComponentExample extends Component {
             target='_blank'
           />
           <Menu.Item
-            active={error} // to show the color
+            active={!!error} // to show the color
             color={color}
             icon='bug'
             content='Issue'

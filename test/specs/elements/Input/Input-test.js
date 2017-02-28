@@ -1,10 +1,11 @@
 import cx from 'classnames'
 import _ from 'lodash'
 import React from 'react'
-import { sandbox } from 'test/utils'
 
 import Input, { htmlInputPropNames } from 'src/elements/Input/Input'
+import { SUI } from 'src/lib'
 import * as common from 'test/specs/commonTests'
+import { sandbox } from 'test/utils'
 
 describe('Input', () => {
   common.isConformant(Input, {
@@ -52,6 +53,7 @@ describe('Input', () => {
     },
   })
   common.hasUIClassName(Input)
+  common.rendersChildren(Input)
 
   common.implementsLabelProp(Input, {
     shorthandDefaultProps: elProps => ({
@@ -68,28 +70,41 @@ describe('Input', () => {
       }),
     }),
   })
-
+  common.implementsCreateMethod(Input)
   common.implementsHTMLInputProp(Input, {
     alwaysPresent: true,
     shorthandDefaultProps: { type: 'text' },
   })
 
-  common.propValueOnlyToClassName(Input, 'size')
-  common.propKeyAndValueToClassName(Input, 'actionPosition', { className: 'action' })
+  common.propKeyAndValueToClassName(Input, 'actionPosition', ['left'], { className: 'action' })
+  common.propKeyAndValueToClassName(Input, 'iconPosition', ['left'], { className: 'icon' })
+  common.propKeyAndValueToClassName(Input, 'labelPosition', ['left', 'right', 'left corner', 'right corner'], {
+    className: 'labeled',
+  })
+
   common.propKeyOnlyToClassName(Input, 'action')
   common.propKeyOnlyToClassName(Input, 'disabled')
   common.propKeyOnlyToClassName(Input, 'error')
-  common.propKeyOnlyToClassName(Input, 'focus')
   common.propKeyOnlyToClassName(Input, 'fluid')
+  common.propKeyOnlyToClassName(Input, 'focus')
   common.propKeyOnlyToClassName(Input, 'inverted')
-  common.propKeyAndValueToClassName(Input, 'labelPosition', { className: 'labeled' })
   common.propKeyOnlyToClassName(Input, 'label', { className: 'labeled' })
   common.propKeyOnlyToClassName(Input, 'loading')
   common.propKeyOnlyToClassName(Input, 'transparent')
-  common.propKeyAndValueToClassName(Input, 'iconPosition', { className: 'icon' })
   common.propKeyOnlyToClassName(Input, 'icon')
 
-  common.rendersChildren(Input)
+  common.propValueOnlyToClassName(Input, 'size', SUI.SIZES)
+
+  it('renders with conditional children', () => {
+    shallow(
+      <Input>
+        {true && <span></span>}
+        {false && <div></div>}
+      </Input>
+    )
+      .should.contain(<span></span>)
+      .should.not.contain(<div></div>)
+  })
 
   it('renders a text <input> by default', () => {
     shallow(<Input />)
@@ -162,6 +177,29 @@ describe('Input', () => {
 
       spy.should.have.been.calledOnce()
       spy.should.have.been.calledWithMatch(e, { ...props, value: e.target.value })
+    })
+  })
+
+  describe('tabIndex', () => {
+    it('is not set by default', () => {
+      shallow(<Input />)
+        .find('input')
+        .should.not.have.prop('tabIndex')
+    })
+    it('defaults to -1 when disabled', () => {
+      shallow(<Input disabled />)
+        .find('input')
+        .should.have.prop('tabIndex', -1)
+    })
+    it('can be set explicitly', () => {
+      shallow(<Input tabIndex={123} />)
+        .find('input')
+        .should.have.prop('tabIndex', 123)
+    })
+    it('can be set explicitly when disabled', () => {
+      shallow(<Input tabIndex={123} disabled />)
+        .find('input')
+        .should.have.prop('tabIndex', 123)
     })
   })
 })

@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { Component, PropTypes } from 'react'
 
 import {
@@ -16,7 +17,7 @@ import Image from '../../elements/Image'
 import Label from '../../elements/Label'
 
 /**
- * An item sub-component for Dropdown component
+ * An item sub-component for Dropdown component.
  */
 export default class DropdownItem extends Component {
   static propTypes = {
@@ -54,6 +55,14 @@ export default class DropdownItem extends Component {
     label: customPropTypes.itemShorthand,
 
     /**
+     * Called on click.
+     *
+     * @param {SyntheticEvent} event - React's original SyntheticEvent.
+     * @param {object} data - All props.
+     */
+    onClick: PropTypes.func,
+
+    /**
      * The item currently selected by keyboard shortcut.
      * This is not the active item.
      */
@@ -62,19 +71,11 @@ export default class DropdownItem extends Component {
     /** Display text. */
     text: customPropTypes.contentShorthand,
 
-    /** Stored value */
+    /** Stored value. */
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
     ]),
-
-    /**
-     * Called on click.
-     *
-     * @param {SyntheticEvent} event - React's original SyntheticEvent.
-     * @param {object} data - All props.
-     */
-    onClick: PropTypes.func,
   }
 
   static _meta = {
@@ -113,12 +114,22 @@ export default class DropdownItem extends Component {
       className,
     )
     // add default dropdown icon if item contains another menu
-    const iconName = icon || childrenUtils.someByType(children, 'DropdownMenu') && 'dropdown'
+    const iconName = _.isNil(icon) ? childrenUtils.someByType(children, 'DropdownMenu') && 'dropdown' : icon
     const rest = getUnhandledProps(DropdownItem, this.props)
     const ElementType = getElementType(DropdownItem, this.props)
+    const ariaOptions = {
+      role: 'option',
+      'aria-disabled': disabled,
+      'aria-checked': active,
+      'aria-selected': selected,
+    }
 
-    if (children) {
-      return <ElementType {...rest} className={classes} onClick={this.handleClick}>{children}</ElementType>
+    if (!_.isNil(children)) {
+      return (
+        <ElementType {...rest} {...ariaOptions} className={classes} onClick={this.handleClick}>
+          {children}
+        </ElementType>
+      )
     }
 
     const flagElement = Flag.create(flag)
@@ -127,30 +138,25 @@ export default class DropdownItem extends Component {
     const labelElement = Label.create(label)
     const descriptionElement = createShorthand(
       'span',
-      val => ({ className: 'description', children: val }),
+      val => ({ children: val }),
       description,
+      props => ({ className: 'description' })
+    )
+    const textElement = createShorthand(
+      'span',
+      val => ({ children: val }),
+      content || text,
+      props => ({ className: 'text' })
     )
 
-    if (descriptionElement) {
-      return (
-        <ElementType {...rest} className={classes} onClick={this.handleClick}>
-          {imageElement}
-          {iconElement}
-          {flagElement}
-          {labelElement}
-          {descriptionElement}
-          {createShorthand('span', val => ({ className: 'text', children: val }), content || text)}
-        </ElementType>
-      )
-    }
-
     return (
-      <ElementType {...rest} className={classes} onClick={this.handleClick}>
+      <ElementType {...rest} {...ariaOptions} className={classes} onClick={this.handleClick}>
         {imageElement}
         {iconElement}
         {flagElement}
         {labelElement}
-        {content || text}
+        {descriptionElement}
+        {textElement}
       </ElementType>
     )
   }

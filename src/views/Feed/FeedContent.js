@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -14,12 +15,22 @@ import FeedMeta from './FeedMeta'
 import FeedSummary from './FeedSummary'
 
 function FeedContent(props) {
-  const { children, className, content, extraImages, extraText, date, meta, summary } = props
-  const classes = cx(className, 'content')
+  const {
+    children,
+    className,
+    content,
+    extraImages,
+    extraText,
+    date,
+    meta,
+    summary,
+  } = props
+
+  const classes = cx('content', className)
   const rest = getUnhandledProps(FeedContent, props)
   const ElementType = getElementType(FeedContent, props)
 
-  if (children) {
+  if (!_.isNil(children)) {
     return <ElementType {...rest} className={classes}>{children}</ElementType>
   }
 

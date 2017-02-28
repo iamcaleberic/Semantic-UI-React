@@ -5,7 +5,7 @@ import Accordion from 'src/modules/Accordion/Accordion'
 import AccordionContent from 'src/modules/Accordion/AccordionContent'
 import AccordionTitle from 'src/modules/Accordion/AccordionTitle'
 import * as common from 'test/specs/commonTests'
-import { sandbox } from 'test/utils'
+import { consoleUtil, sandbox } from 'test/utils'
 
 describe('Accordion', () => {
   common.isConformant(Accordion)
@@ -100,6 +100,108 @@ describe('Accordion', () => {
       wrapper.childAt(4).should.have.prop('active', true)
       wrapper.childAt(5).should.have.prop('active', true)
     })
+
+    it('can be an array', () => {
+      const wrapper = shallow(
+        <Accordion exclusive={false}>
+          <Accordion.Title />
+          <Accordion.Content />
+          <Accordion.Title />
+          <Accordion.Content />
+          <Accordion.Title />
+          <Accordion.Content />
+        </Accordion>
+      )
+      wrapper.setProps({ activeIndex: [0, 1] })
+      wrapper.childAt(0).should.have.prop('active', true)
+      wrapper.childAt(1).should.have.prop('active', true)
+      wrapper.childAt(2).should.have.prop('active', true)
+      wrapper.childAt(3).should.have.prop('active', true)
+
+      wrapper.setProps({ activeIndex: [1, 2] })
+      wrapper.childAt(2).should.have.prop('active', true)
+      wrapper.childAt(3).should.have.prop('active', true)
+      wrapper.childAt(4).should.have.prop('active', true)
+      wrapper.childAt(5).should.have.prop('active', true)
+    })
+
+    it('can be inclusive and makes Accordion.Content at activeIndex - 1 "active"', () => {
+      const contents = shallow(
+        <Accordion exclusive={false} defaultActiveIndex={[0]}>
+          <Accordion.Title />
+          <Accordion.Content />
+          <Accordion.Title />
+          <Accordion.Content />
+        </Accordion>
+      )
+        .find('AccordionTitle')
+
+      contents.at(0).should.have.prop('active', true)
+      contents.at(1).should.have.prop('active', false)
+    })
+
+    it('can be inclusive and allows multiple open', () => {
+      const contents = shallow(
+        <Accordion exclusive={false} defaultActiveIndex={[0, 1]}>
+          <Accordion.Title />
+          <Accordion.Content />
+          <Accordion.Title />
+          <Accordion.Content />
+        </Accordion>
+      )
+        .find('AccordionTitle')
+
+      contents.at(0).should.have.prop('active', true)
+      contents.at(1).should.have.prop('active', true)
+    })
+
+    it('can be inclusive and can open multiple panels by clicking', () => {
+      const wrapper = mount(
+        <Accordion exclusive={false}>
+          <Accordion.Title />
+          <Accordion.Content />
+          <Accordion.Title />
+          <Accordion.Content />
+        </Accordion>
+      )
+      const titles = wrapper.find('AccordionTitle')
+      const contents = wrapper.find('AccordionContent')
+
+      titles
+        .at(0)
+        .simulate('click')
+        .should.have.prop('active', true)
+      titles
+        .at(1)
+        .simulate('click')
+        .should.have.prop('active', true)
+      contents.at(0).should.have.prop('active', true)
+      contents.at(1).should.have.prop('active', true)
+    })
+
+    it('can be inclusive and close multiple panels by clicking', () => {
+      const wrapper = mount(
+        <Accordion exclusive={false} defaultActiveIndex={[0, 1]}>
+          <Accordion.Title />
+          <Accordion.Content />
+          <Accordion.Title />
+          <Accordion.Content />
+        </Accordion>
+      )
+      const titles = wrapper.find('AccordionTitle')
+      const contents = wrapper.find('AccordionContent')
+
+      titles
+        .at(0)
+        .simulate('click')
+        .should.have.prop('active', false)
+      titles
+        .at(1)
+        .simulate('click')
+        .should.have.prop('active', false)
+      contents.at(0).should.have.prop('active', false)
+      contents.at(1).should.have.prop('active', false)
+    })
   })
 
   describe('defaultActiveIndex', () => {
@@ -131,6 +233,7 @@ describe('Accordion', () => {
 
   describe('panels', () => {
     it('does not render children', () => {
+      consoleUtil.disableOnce()
       shallow(
         <Accordion panels={[]}>
           <div id='do-not-find-me' />
@@ -139,9 +242,9 @@ describe('Accordion', () => {
         .should.not.have.descendants('#do-not-find-me')
     })
 
-    it('adds text and content sibling children', () => {
+    it('adds text title and text content sibling children', () => {
       const panels = [{
-        text: faker.lorem.sentence(),
+        title: faker.lorem.sentence(),
         content: faker.lorem.paragraph(),
       }]
       const wrapper = mount(<Accordion panels={panels} />)
@@ -151,22 +254,40 @@ describe('Accordion', () => {
         .should.have.className('title')
         .and.contain.text(panels[0].title)
 
+      expect(wrapper.childAt(0).key()).to.equal(`${panels[0].title}-title`)
+
       wrapper
         .childAt(1)
         .should.have.className('content')
         .and.contain.text(panels[0].content)
+
+      expect(wrapper.childAt(1).key()).to.equal(`${panels[0].title}-content`)
     })
 
-    it('allows setting the active prop', () => {
+    it('adds custom element title and custom element content sibling children', () => {
       const panels = [{
-        active: true,
-        title: faker.lorem.sentence(),
-        content: faker.lorem.paragraph(),
-      }, {
-        active: false,
-        title: faker.lorem.sentence(),
-        content: faker.lorem.paragraph(),
+        key: 'panel-1',
+        title: (<h1>{faker.lorem.sentence()}</h1>),
+        content: (<h2>{faker.lorem.paragraph()}</h2>),
       }]
+      const wrapper = mount(<Accordion panels={panels} />)
+
+      wrapper
+        .childAt(0)
+        .should.have.className('title')
+        .and.contain(panels[0].title)
+
+      expect(wrapper.childAt(0).key()).to.equal('panel-1-title')
+
+      wrapper
+        .childAt(1)
+        .should.have.className('content')
+        .and.contain(panels[0].content)
+
+      expect(wrapper.childAt(1).key()).to.equal('panel-1-content')
+    })
+
+    const checkIfAllowsSettingTheActiveProp = panels => {
       const wrapper = shallow(<Accordion panels={panels} />)
 
       // first panel (active)
@@ -192,12 +313,40 @@ describe('Accordion', () => {
         .find('AccordionContent')
         .at(1)
         .should.have.prop('active', false)
+    }
+
+    it('allows setting the active prop', () => {
+      const panels = [{
+        active: true,
+        title: faker.lorem.sentence(),
+        content: faker.lorem.paragraph(),
+      }, {
+        active: false,
+        title: faker.lorem.sentence(),
+        content: faker.lorem.paragraph(),
+      }]
+
+      checkIfAllowsSettingTheActiveProp(panels)
+    })
+
+    it('allows setting the active prop for custom title and content', () => {
+      const panels = [{
+        active: true,
+        title: (<div>faker.lorem.sentence()</div>),
+        content: (<p>faker.lorem.paragraph()</p>),
+      }, {
+        active: false,
+        title: (<h1>faker.lorem.sentence()</h1>),
+        content: (<h3>faker.lorem.paragraph()</h3>),
+      }]
+
+      checkIfAllowsSettingTheActiveProp(panels)
     })
 
     describe('onClick', () => {
       it('can be omitted', () => {
         const panels = [{
-          text: faker.lorem.sentence(),
+          title: faker.lorem.sentence(),
           content: faker.lorem.paragraph(),
         }]
         const wrapper = mount(<Accordion panels={panels} />)

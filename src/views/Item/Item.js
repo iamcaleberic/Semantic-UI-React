@@ -1,8 +1,8 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
-  createShorthand,
   customPropTypes,
   getElementType,
   getUnhandledProps,
@@ -17,21 +17,31 @@ import ItemImage from './ItemImage'
 import ItemMeta from './ItemMeta'
 
 /**
- * An item view presents large collections of site content for display
- **/
+ * An item view presents large collections of site content for display.
+ */
 function Item(props) {
-  const { children, className, content, description, extra, header, image, meta } = props
-  const classes = cx(className, 'item')
+  const {
+    children,
+    className,
+    content,
+    description,
+    extra,
+    header,
+    image,
+    meta,
+  } = props
+
+  const classes = cx('item', className)
   const rest = getUnhandledProps(Item, props)
   const ElementType = getElementType(Item, props)
 
-  if (children) {
+  if (!_.isNil(children)) {
     return <ElementType {...rest} className={classes}>{children}</ElementType>
   }
 
   return (
     <ElementType {...rest} className={classes}>
-      {createShorthand(ItemImage, val => ({ src: val }), image)}
+      {ItemImage.create(image)}
 
       <ItemContent
         content={content}

@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -9,7 +10,7 @@ import {
 } from '../../lib'
 
 /**
- * A card can contain content metadata
+ * A card can contain content metadata.
  */
 function CardMeta(props) {
   const { children, className, content } = props
@@ -17,7 +18,11 @@ function CardMeta(props) {
   const rest = getUnhandledProps(CardMeta, props)
   const ElementType = getElementType(CardMeta, props)
 
-  return <ElementType {...rest} className={classes}>{children || content}</ElementType>
+  return (
+    <ElementType {...rest} className={classes}>
+      {_.isNil(children) ? content : children}
+    </ElementType>
+  )
 }
 
 CardMeta._meta = {

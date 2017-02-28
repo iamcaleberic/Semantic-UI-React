@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -9,13 +10,20 @@ import {
   META,
 } from '../../lib'
 
+/**
+ * A list item can contain a description.
+ */
 function ListDescription(props) {
   const { children, className, content } = props
   const classes = cx(className, 'description')
   const rest = getUnhandledProps(ListDescription, props)
   const ElementType = getElementType(ListDescription, props)
 
-  return <ElementType {...rest} className={classes}>{children || content}</ElementType>
+  return (
+    <ElementType {...rest} className={classes}>
+      {_.isNil(children) ? content : children}
+    </ElementType>
+  )
 }
 
 ListDescription._meta = {

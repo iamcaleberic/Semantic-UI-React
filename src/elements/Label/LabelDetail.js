@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -14,7 +15,11 @@ function LabelDetail(props) {
   const rest = getUnhandledProps(LabelDetail, props)
   const ElementType = getElementType(LabelDetail, props)
 
-  return <ElementType {...rest} className={classes}>{children || content}</ElementType>
+  return (
+    <ElementType {...rest} className={classes}>
+      {_.isNil(children) ? content : children}
+    </ElementType>
+  )
 }
 
 LabelDetail._meta = {

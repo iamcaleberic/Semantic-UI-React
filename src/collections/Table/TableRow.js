@@ -15,6 +15,9 @@ import {
 } from '../../lib'
 import TableCell from './TableCell'
 
+/**
+ * A table can have rows.
+ */
 function TableRow(props) {
   const {
     active,
@@ -45,7 +48,7 @@ function TableRow(props) {
   const rest = getUnhandledProps(TableRow, props)
   const ElementType = getElementType(TableRow, props)
 
-  if (children) {
+  if (!_.isNil(children)) {
     return <ElementType {...rest} className={classes}>{children}</ElementType>
   }
 
@@ -60,10 +63,6 @@ TableRow._meta = {
   name: 'TableRow',
   type: META.TYPES.COLLECTION,
   parent: 'Table',
-  props: {
-    textAlign: SUI.TEXT_ALIGNMENTS,
-    verticalAlign: SUI.VERTICAL_ALIGNMENTS,
-  },
 }
 
 TableRow.defaultProps = {
@@ -103,15 +102,15 @@ TableRow.propTypes = {
   positive: PropTypes.bool,
 
   /** A table row can adjust its text alignment. */
-  textAlign: PropTypes.oneOf(TableRow._meta.props.textAlign),
+  textAlign: PropTypes.oneOf(_.without(SUI.TEXT_ALIGNMENTS, 'justified')),
 
   /** A table row can adjust its vertical alignment. */
-  verticalAlign: PropTypes.oneOf(TableRow._meta.props.verticalAlign),
+  verticalAlign: PropTypes.oneOf(SUI.VERTICAL_ALIGNMENTS),
 
   /** A row may warn a user. */
   warning: PropTypes.bool,
 }
 
-TableRow.create = createShorthandFactory(TableRow, cells => ({ cells }))
+TableRow.create = createShorthandFactory(TableRow, cells => ({ cells }), true)
 
 export default TableRow

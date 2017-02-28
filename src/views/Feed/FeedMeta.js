@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -10,13 +11,22 @@ import {
 } from '../../lib'
 import FeedLike from './FeedLike'
 
+/**
+ * A feed can contain a meta.
+ */
 function FeedMeta(props) {
-  const { children, className, content, like } = props
-  const classes = cx(className, 'meta')
+  const {
+    children,
+    className,
+    content,
+    like,
+  } = props
+
+  const classes = cx('meta', className)
   const rest = getUnhandledProps(FeedMeta, props)
   const ElementType = getElementType(FeedMeta, props)
 
-  if (children) {
+  if (!_.isNil(children)) {
     return <ElementType {...rest} className={classes}>{children}</ElementType>
   }
 

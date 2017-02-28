@@ -5,9 +5,36 @@ import ExampleSection from 'docs/app/Components/ComponentDoc/ExampleSection'
 const DropdownUsageExamples = () => (
   <ExampleSection title='Usage'>
     <ComponentExample
+      title='Open On Focus'
+      description='A dropdown that opens when it is focussed on.'
+      examplePath='modules/Dropdown/Usage/DropdownExampleOpenOnFocus'
+    />
+
+    <ComponentExample
+      title='Close On Blur'
+      description='A dropdown that closes when it blurs'
+      examplePath='modules/Dropdown/Usage/DropdownExampleCloseOnBlur'
+    />
+
+    <ComponentExample
+      title='Close On Change'
+      description='A multiple selection dropdown can close when the user changes its value.'
+      examplePath='modules/Dropdown/Usage/DropdownExampleCloseOnChange'
+    />
+
+    <ComponentExample
       title='Uncontrolled'
       description='A dropdown can behave like an uncontrolled input.'
       examplePath='modules/Dropdown/Usage/DropdownExampleUncontrolled'
+    />
+    <ComponentExample
+      title='No Results Message'
+      description='You can change the no results message.'
+      examplePath='modules/Dropdown/Usage/DropdownExampleCustomNoResultsMessage'
+    />
+    <ComponentExample
+      description='You can remove the no results message.'
+      examplePath='modules/Dropdown/Usage/DropdownExampleRemoveNoResultsMessage'
     />
     <ComponentExample
       title='Remote'

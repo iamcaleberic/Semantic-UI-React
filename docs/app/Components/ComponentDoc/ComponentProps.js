@@ -1,7 +1,8 @@
 import _ from 'lodash'
 import React, { Component, PropTypes } from 'react'
 
-import { Label, Table } from 'src'
+import { Icon, Popup, Table } from 'src'
+import { SUI } from 'src/lib'
 
 const descriptionExtraStyle = {
   fontSize: '0.95em',
@@ -38,47 +39,78 @@ export default class ComponentProps extends Component {
     })
   }
 
-  renderName = (item) => <code>{item.name}</code>
+  renderName = item => <code>{item.name}</code>
 
-  requiredRenderer = (item) => {
-    if (!item.required) return null
+  renderRequired = item => item.required && (
+    <Popup
+      position='right center'
+      style={{ padding: '0.5em' }}
+      trigger={<Icon size='small' color='red' name='asterisk' />}
+      content='Required'
+      size='tiny'
+      inverted
+    />
+  )
 
-    return <Label size='mini' color='red' circular>required</Label>
+  renderDefaultValue = item => {
+    const defaultValue = _.get(item, 'defaultValue.value')
+    if (_.isNil(defaultValue)) return null
+
+    const defaultIsString = defaultValue[0] === "'"
+
+    return <code>{defaultIsString ? `=${defaultValue}` : `={${defaultValue}}`}</code>
   }
 
-  renderDefaultValue = (item) => {
-    let defaultValue = _.get(item, 'defaultValue.value')
+  renderFunctionSignature = (item) => {
+    if (item.type !== '{func}') return
 
-    if (_.startsWith(defaultValue, 'function ')) {
-      defaultValue = defaultValue.match(/^function(.*)\{/)[1].trim()
-    }
+    const params = _.filter(item.tags, { title: 'param' })
+    const paramSignature = params
+      .map(param => `${param.name}: ${param.type.name}`)
+      .join(', ')
 
-    const defaultIsComputed = <span className='ui mini gray circular label'>computed</span>
+    const paramDescriptions = params.map(param => (
+      <div style={{ color: '#888' }} key={param.name}>
+        <strong>{param.name}</strong> - {param.description}
+      </div>
+    ))
+
+    const signature = <pre><code>{item.name}({paramSignature})</code></pre>
 
     return (
       <div>
-        {defaultValue} {_.get(item, 'defaultValue.computed') && defaultIsComputed}
+        <strong>Signature:</strong>
+        {signature}
+        {paramDescriptions}
       </div>
     )
   }
 
+  expandEnums = (value) => {
+    const parts = value.split('.')
+    if (parts[0] === 'SUI') {
+      return SUI[parts[1]]
+    }
+    return value
+  }
+
   renderEnums = (item) => {
+    if (item.type !== '{enum}') return
+
     const { showEnumsFor } = this.state
-    const { meta } = this.props
-
-    if (item.type.indexOf('enum') === -1) return null
-
-    const values = meta.props[item.name]
     const truncateAt = 30
 
-    if (!values) return null
+    if (!item.value) return null
+
+    const values = [].concat(item.value).reduce((accumulator, v) => {
+      return accumulator.concat(this.expandEnums(_.trim(v.value || v, '.\'')))
+    }, [])
 
     // show all if there are few
     if (values.length < truncateAt) {
       return (
         <p style={descriptionExtraStyle}>
-          <strong>Enums: </strong>
-          {values.join(', ')}
+          <strong>Enums: </strong> {values.join(', ')}
         </p>
       )
     }
@@ -108,8 +140,26 @@ export default class ComponentProps extends Component {
     )
   }
 
+  renderRow = item => {
+    return (
+      <Table.Row key={item.name}>
+        <Table.Cell>{this.renderName(item)}{this.renderRequired(item)}</Table.Cell>
+        <Table.Cell>{this.renderDefaultValue(item)}</Table.Cell>
+        <Table.Cell>{item.type}</Table.Cell>
+        <Table.Cell>
+          {item.description && (
+            <p>{item.description}</p>
+          )}
+          {this.renderFunctionSignature(item)}
+          {this.renderEnums(item)}
+        </Table.Cell>
+      </Table.Row>
+    )
+  }
+
   render() {
     const { props: propsDefinition } = this.props
+
     const content = _.sortBy(_.map(propsDefinition, (config, name) => {
       const value = _.get(config, 'type.value')
       let type = _.get(config, 'type.name')
@@ -124,37 +174,25 @@ export default class ComponentProps extends Component {
         name,
         type,
         value,
+        tags: _.get(config, 'docBlock.tags'),
         required: config.required,
         defaultValue: config.defaultValue,
         description: description && description.split('\n').map(l => ([l, <br key={l} />])),
       }
     }), 'name')
+
     return (
-      <Table data={content} className='very basic compact'>
+      <Table compact basic='very'>
         <Table.Header>
           <Table.Row>
             <Table.HeaderCell>Name</Table.HeaderCell>
-            <Table.HeaderCell />
-            <Table.HeaderCell>Type</Table.HeaderCell>
             <Table.HeaderCell>Default</Table.HeaderCell>
+            <Table.HeaderCell>Type</Table.HeaderCell>
             <Table.HeaderCell>Description</Table.HeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {_.map(content, item => (
-            <Table.Row key={item.name}>
-              <Table.Cell>{this.renderName(item)}</Table.Cell>
-              <Table.Cell>{this.requiredRenderer(item)}</Table.Cell>
-              <Table.Cell>
-                {item.type}
-              </Table.Cell>
-              <Table.Cell>{this.renderDefaultValue(item.defaultValue)}</Table.Cell>
-              <Table.Cell>
-                {item.description && <p>{item.description}</p>}
-                {this.renderEnums(item)}
-              </Table.Cell>
-            </Table.Row>
-          ))}
+          {_.map(content, this.renderRow)}
         </Table.Body>
       </Table>
     )

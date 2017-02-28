@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { Component, PropTypes } from 'react'
 
 import {
@@ -15,37 +16,14 @@ import {
 } from '../../lib'
 import Icon from '../Icon/Icon'
 import Label from '../Label/Label'
-
 import ButtonContent from './ButtonContent'
 import ButtonGroup from './ButtonGroup'
 import ButtonOr from './ButtonOr'
 
 const debug = makeDebugger('button')
 
-const _meta = {
-  name: 'Button',
-  type: META.TYPES.ELEMENT,
-  props: {
-    animated: ['fade', 'vertical'],
-    attached: ['left', 'right', 'top', 'bottom'],
-    color: [
-      ...SUI.COLORS,
-      'facebook',
-      'twitter',
-      'google plus',
-      'vk',
-      'linkedin',
-      'instagram',
-      'youtube',
-    ],
-    floated: SUI.FLOATS,
-    labelPosition: ['right', 'left'],
-    size: SUI.SIZES,
-  },
-}
-
 /**
- * A Button indicates a possible user action
+ * A Button indicates a possible user action.
  * @see Form
  * @see Icon
  * @see Label
@@ -55,19 +33,19 @@ class Button extends Component {
     /** An element type to render as (string or function). */
     as: customPropTypes.as,
 
-    /** A button can show it is currently the active user selection */
+    /** A button can show it is currently the active user selection. */
     active: PropTypes.bool,
 
-    /** A button can animate to show hidden content */
+    /** A button can animate to show hidden content. */
     animated: PropTypes.oneOfType([
       PropTypes.bool,
-      PropTypes.oneOf(_meta.props.animated),
+      PropTypes.oneOf(['fade', 'vertical']),
     ]),
 
-    /** A button can be attached to the top or bottom of other content */
-    attached: PropTypes.oneOf(_meta.props.attached),
+    /** A button can be attached to the top or bottom of other content. */
+    attached: PropTypes.oneOf(['left', 'right', 'top', 'bottom']),
 
-    /** A basic button is less pronounced */
+    /** A basic button is less pronounced. */
     basic: PropTypes.bool,
 
     /** Primary content. */
@@ -86,31 +64,34 @@ class Button extends Component {
       ),
     ]),
 
-    /** A button can be circular */
-    circular: PropTypes.bool,
-
     /** Additional classes. */
     className: PropTypes.string,
+
+    /** A button can be circular. */
+    circular: PropTypes.bool,
+
+    /** A button can have different colors */
+    color: PropTypes.oneOf([
+      ...SUI.COLORS,
+      'facebook', 'google plus', 'instagram', 'linkedin', 'twitter', 'vk', 'youtube',
+    ]),
+
+    /** A button can reduce its padding to fit into tighter spaces. */
+    compact: PropTypes.bool,
 
     /** Shorthand for primary content. */
     content: customPropTypes.contentShorthand,
 
-    /** A button can have different colors */
-    color: PropTypes.oneOf(_meta.props.color),
-
-    /** A button can reduce its padding to fit into tighter spaces */
-    compact: PropTypes.bool,
-
-    /** A button can show it is currently unable to be interacted with */
+    /** A button can show it is currently unable to be interacted with. */
     disabled: PropTypes.bool,
 
-    /** A button can be aligned to the left or right of its container */
-    floated: PropTypes.oneOf(_meta.props.floated),
+    /** A button can be aligned to the left or right of its container. */
+    floated: PropTypes.oneOf(SUI.FLOATS),
 
-    /** A button can take the width of its container */
+    /** A button can take the width of its container. */
     fluid: PropTypes.bool,
 
-    /** Add an Icon by name, props object, or pass an <Icon /> */
+    /** Add an Icon by name, props object, or pass an <Icon />. */
     icon: customPropTypes.some([
       PropTypes.bool,
       PropTypes.string,
@@ -118,23 +99,23 @@ class Button extends Component {
       PropTypes.element,
     ]),
 
-    /** A button can be formatted to appear on dark backgrounds */
+    /** A button can be formatted to appear on dark backgrounds. */
     inverted: PropTypes.bool,
 
-    /** A labeled button can format a Label or Icon to appear on the left or right */
-    labelPosition: PropTypes.oneOf(_meta.props.labelPosition),
-
-    /** Add a Label by text, props object, or pass a <Label /> */
+    /** Add a Label by text, props object, or pass a <Label />. */
     label: customPropTypes.some([
       PropTypes.string,
       PropTypes.object,
       PropTypes.element,
     ]),
 
-    /** A button can show a loading indicator */
+    /** A labeled button can format a Label or Icon to appear on the left or right. */
+    labelPosition: PropTypes.oneOf(['right', 'left']),
+
+    /** A button can show a loading indicator. */
     loading: PropTypes.bool,
 
-    /** A button can hint towards a negative consequence */
+    /** A button can hint towards a negative consequence. */
     negative: PropTypes.bool,
 
     /**
@@ -144,27 +125,37 @@ class Button extends Component {
      */
     onClick: PropTypes.func,
 
-    /** A button can hint towards a positive consequence */
+    /** A button can hint towards a positive consequence. */
     positive: PropTypes.bool,
 
-    /** A button can be formatted to show different levels of emphasis */
+    /** A button can be formatted to show different levels of emphasis. */
     primary: PropTypes.bool,
 
-    /** A button can be formatted to show different levels of emphasis */
+    /** A button can be formatted to show different levels of emphasis. */
     secondary: PropTypes.bool,
 
-    /** A button can be formatted to toggle on and off */
-    toggle: PropTypes.bool,
+    /** A button can have different sizes. */
+    size: PropTypes.oneOf(SUI.SIZES),
 
-    /** A button can have different sizes */
-    size: PropTypes.oneOf(_meta.props.size),
+    /** A button can receive focus. */
+    tabIndex: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
+
+    /** A button can be formatted to toggle on and off. */
+    toggle: PropTypes.bool,
   }
 
   static defaultProps = {
     as: 'button',
   }
 
-  static _meta = _meta
+  static _meta = {
+    name: 'Button',
+    type: META.TYPES.ELEMENT,
+  }
+
   static Content = ButtonContent
   static Group = ButtonGroup
   static Or = ButtonOr
@@ -178,6 +169,14 @@ class Button extends Component {
     }
 
     if (onClick) onClick(e, this.props)
+  }
+
+  computeTabIndex = ElementType => {
+    const { disabled, tabIndex } = this.props
+
+    if (!_.isNil(tabIndex)) return tabIndex
+    if (disabled) return -1
+    if (ElementType === 'div') return 0
   }
 
   render() {
@@ -216,13 +215,9 @@ class Button extends Component {
       color,
       size,
       useKeyOnly(active, 'active'),
-      useKeyOrValueAndKey(animated, 'animated'),
-      useKeyOrValueAndKey(attached, 'attached'),
       useKeyOnly(basic, 'basic'),
       useKeyOnly(circular, 'circular'),
       useKeyOnly(compact, 'compact'),
-      useKeyOnly(disabled, 'disabled'),
-      useValueAndKey(floated, 'floated'),
       useKeyOnly(fluid, 'fluid'),
       useKeyOnly(icon === true || icon && (labelPosition || !children && !content), 'icon'),
       useKeyOnly(inverted, 'inverted'),
@@ -232,15 +227,19 @@ class Button extends Component {
       useKeyOnly(primary, 'primary'),
       useKeyOnly(secondary, 'secondary'),
       useKeyOnly(toggle, 'toggle'),
+      useKeyOrValueAndKey(animated, 'animated'),
+      useKeyOrValueAndKey(attached, 'attached'),
+      useValueAndKey(floated, 'floated'),
     )
+    const wrapperClasses = cx(useKeyOnly(disabled, 'disabled'))
     const rest = getUnhandledProps(Button, this.props)
     const ElementType = getElementType(Button, this.props, () => {
-      if (label || attached) return 'div'
+      if (!_.isNil(label) || !_.isNil(attached)) return 'div'
     })
-    const tabIndex = ElementType === 'div' ? 0 : undefined
+    const tabIndex = this.computeTabIndex(ElementType)
 
-    if (children) {
-      const classes = cx('ui', baseClasses, labeledClasses, 'button', className)
+    if (!_.isNil(children)) {
+      const classes = cx('ui', baseClasses, wrapperClasses, labeledClasses, 'button', className)
       debug('render children:', { classes })
       return (
         <ElementType {...rest} className={classes} tabIndex={tabIndex} onClick={this.handleClick}>
@@ -249,18 +248,19 @@ class Button extends Component {
       )
     }
 
-    if (label) {
+    const labelElement = Label.create(label, {
+      basic: true,
+      pointing: labelPosition === 'left' ? 'right' : 'left',
+    })
+    if (labelElement) {
       const classes = cx('ui', baseClasses, 'button', className)
-      const containerClasses = cx('ui', labeledClasses, 'button', className)
+      const containerClasses = cx('ui', labeledClasses, 'button', className, wrapperClasses)
       debug('render label:', { classes, containerClasses }, this.props)
-      const labelElement = Label.create(label, {
-        basic: true,
-        pointing: labelPosition === 'left' ? 'right' : 'left',
-      })
+
       return (
         <ElementType {...rest} className={containerClasses} onClick={this.handleClick}>
           {labelPosition === 'left' && labelElement}
-          <button className={classes}>
+          <button className={classes} tabIndex={tabIndex}>
             {Icon.create(icon)} {content}
           </button>
           {(labelPosition === 'right' || !labelPosition) && labelElement}
@@ -268,8 +268,8 @@ class Button extends Component {
       )
     }
 
-    if (icon && !label) {
-      const classes = cx('ui', labeledClasses, baseClasses, 'button', className)
+    if (!_.isNil(icon) && _.isNil(label)) {
+      const classes = cx('ui', labeledClasses, baseClasses, 'button', className, wrapperClasses)
       debug('render icon && !label:', { classes })
       return (
         <ElementType {...rest} className={classes} tabIndex={tabIndex} onClick={this.handleClick}>
@@ -278,7 +278,7 @@ class Button extends Component {
       )
     }
 
-    const classes = cx('ui', labeledClasses, baseClasses, 'button', className)
+    const classes = cx('ui', labeledClasses, baseClasses, 'button', className, wrapperClasses)
     debug('render default:', { classes })
 
     return (

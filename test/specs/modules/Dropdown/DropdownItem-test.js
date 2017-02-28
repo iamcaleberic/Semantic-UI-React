@@ -20,31 +20,73 @@ describe('DropdownItem', () => {
   common.implementsShorthandProp(DropdownItem, {
     propKey: 'flag',
     ShorthandComponent: Flag,
-    mapValueToProps: val => ({ name: val }),
+    mapValueToProps: name => ({ name }),
   })
 
   common.implementsShorthandProp(DropdownItem, {
     propKey: 'description',
     ShorthandComponent: 'span',
-    mapValueToProps: val => ({
-      className: 'description',
-      children: val,
-    }),
+    mapValueToProps: children => ({ children }),
+    shorthandDefaultProps: props => ({ className: 'description' }),
+  })
+
+  common.implementsShorthandProp(DropdownItem, {
+    propKey: 'text',
+    ShorthandComponent: 'span',
+    mapValueToProps: children => ({ children }),
+    shorthandDefaultProps: props => ({ className: 'text' }),
+  })
+
+  describe('aria', () => {
+    it('should render DropdownItem as role=option', () => {
+      const wrapper = shallow(<DropdownItem />)
+      wrapper.should.have.prop('role', 'option')
+    })
+    it('should render DropdownItem with children as role=option', () => {
+      const wrapper = shallow(<DropdownItem>Text</DropdownItem>)
+      wrapper.should.have.prop('role', 'option')
+    })
+    it('should render DropdownItem with description as role=option', () => {
+      const wrapper = shallow(<DropdownItem description='Text' />)
+      wrapper.should.have.prop('role', 'option')
+    })
+    it('should render disabled DropdownItem with aria-disabled', () => {
+      const wrapper = shallow(<DropdownItem disabled />)
+      wrapper.should.have.prop('aria-disabled', true)
+    })
+    it('should render normal DropdownItem without aria-disabled', () => {
+      const wrapper = shallow(<DropdownItem />)
+      wrapper.should.not.have.prop('aria-disabled')
+    })
+    it('should render active DropdownItem with aria-checked', () => {
+      const wrapper = shallow(<DropdownItem active />)
+      wrapper.should.have.prop('aria-checked', true)
+    })
+    it('should render normal DropdownItem without aria-disabled', () => {
+      const wrapper = shallow(<DropdownItem />)
+      wrapper.should.not.have.prop('aria-checked')
+    })
+    it('should render selected DropdownItem with aria-selected', () => {
+      const wrapper = shallow(<DropdownItem selected />)
+      wrapper.should.have.prop('aria-selected', true)
+    })
+    it('should render normal DropdownItem without aria-selected', () => {
+      const wrapper = shallow(<DropdownItem />)
+      wrapper.should.not.have.prop('aria-selected')
+    })
+  })
+
+  describe('description', () => {
+    it('adds className="description" to element shorthand', () => {
+      shallow(<DropdownItem description={<strong />} />)
+        .should.have.descendants('strong.description')
+    })
   })
 
   describe('text', () => {
-    it('renders with wrapping span when description', () => {
-      const wrapper = shallow(<DropdownItem text='hey' description='description' />)
-
-      wrapper.should.have.descendants('span.text')
-      wrapper.text().should.include('hey')
-    })
-
-    it('renders without wrapping span when no description', () => {
-      const wrapper = shallow(<DropdownItem text='hey' />)
-
-      wrapper.should.not.have.descendants('span.text')
-      wrapper.text().should.equal('hey')
+    it('adds className="text" to element shorthand', () => {
+      shallow(<DropdownItem text={<strong />} />)
+        .should.have.descendants('strong.text')
     })
   })
 

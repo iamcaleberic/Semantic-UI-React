@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -9,13 +10,22 @@ import {
 } from '../../lib'
 import Icon from '../../elements/Icon'
 
+/**
+ * A feed can contain a like element.
+ */
 function FeedLike(props) {
-  const { children, className, content, icon } = props
-  const classes = cx(className, 'like')
+  const {
+    children,
+    className,
+    content,
+    icon,
+  } = props
+
+  const classes = cx('like', className)
   const rest = getUnhandledProps(FeedLike, props)
   const ElementType = getElementType(FeedLike, props)
 
-  if (children) {
+  if (!_.isNil(children)) {
     return <ElementType {...rest} className={classes}>{children}</ElementType>
   }
 

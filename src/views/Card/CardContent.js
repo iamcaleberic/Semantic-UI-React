@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -14,10 +15,18 @@ import CardHeader from './CardHeader'
 import CardMeta from './CardMeta'
 
 /**
- * A card can contain blocks of content or extra content meant to be formatted separately from the main content
+ * A card can contain blocks of content or extra content meant to be formatted separately from the main content.
  */
 function CardContent(props) {
-  const { children, className, description, extra, header, meta } = props
+  const {
+    children,
+    className,
+    description,
+    extra,
+    header,
+    meta,
+  } = props
+
   const classes = cx(
     className,
     useKeyOnly(extra, 'extra'),
@@ -26,7 +35,7 @@ function CardContent(props) {
   const rest = getUnhandledProps(CardContent, props)
   const ElementType = getElementType(CardContent, props)
 
-  if (children) {
+  if (!_.isNil(children)) {
     return <ElementType {...rest} className={classes}>{children}</ElementType>
   }
 
@@ -58,7 +67,7 @@ CardContent.propTypes = {
   /** Shorthand for CardDescription. */
   description: customPropTypes.itemShorthand,
 
-  /** A card can contain extra content meant to be formatted separately from the main content */
+  /** A card can contain extra content meant to be formatted separately from the main content. */
   extra: PropTypes.bool,
 
   /** Shorthand for CardHeader. */

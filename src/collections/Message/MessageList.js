@@ -1,29 +1,30 @@
-import _ from 'lodash'
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
+  createShorthandFactory,
   customPropTypes,
   getElementType,
   getUnhandledProps,
   META,
 } from '../../lib'
-
 import MessageItem from './MessageItem'
 
+/**
+ * A message can contain a list of items.
+ */
 function MessageList(props) {
   const { children, className, items } = props
   const classes = cx('list', className)
   const rest = getUnhandledProps(MessageList, props)
   const ElementType = getElementType(MessageList, props)
 
-  if (children) {
-    return <ElementType {...rest} className={classes}>{children}</ElementType>
-  }
-
-  const content = _.map(items, item => <MessageItem key={item}>{item}</MessageItem>)
-
-  return <ElementType {...rest} className={classes}>{content}</ElementType>
+  return (
+    <ElementType {...rest} className={classes}>
+      {_.isNil(children) ? _.map(items, MessageItem.create) : children}
+    </ElementType>
+  )
 }
 
 MessageList._meta = {
@@ -42,12 +43,14 @@ MessageList.propTypes = {
   /** Additional classes. */
   className: PropTypes.string,
 
-  /** Strings to use as list items. Mutually exclusive with children. */
-  items: PropTypes.arrayOf(PropTypes.string),
+  /** Shorthand Message.Items. */
+  items: customPropTypes.collectionShorthand,
 }
 
 MessageList.defaultProps = {
   as: 'ul',
 }
+
+MessageList.create = createShorthandFactory(MessageList, val => ({ items: val }))
 
 export default MessageList

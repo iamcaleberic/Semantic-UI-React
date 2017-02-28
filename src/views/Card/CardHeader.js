@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -9,7 +10,7 @@ import {
 } from '../../lib'
 
 /**
- * A card can contain a header
+ * A card can contain a header.
  */
 function CardHeader(props) {
   const { children, className, content } = props
@@ -17,7 +18,11 @@ function CardHeader(props) {
   const rest = getUnhandledProps(CardHeader, props)
   const ElementType = getElementType(CardHeader, props)
 
-  return <ElementType {...rest} className={classes}>{children || content}</ElementType>
+  return (
+    <ElementType {...rest} className={classes}>
+      {_.isNil(children) ? content : children}
+    </ElementType>
+  )
 }
 
 CardHeader._meta = {

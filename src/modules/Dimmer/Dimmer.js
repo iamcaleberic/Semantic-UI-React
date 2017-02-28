@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { Component, PropTypes } from 'react'
 
 import {
@@ -12,11 +13,6 @@ import {
 } from '../../lib'
 import Portal from '../../addons/Portal'
 import DimmerDimmable from './DimmerDimmable'
-
-const _meta = {
-  name: 'Dimmer',
-  type: META.TYPES.MODULE,
-}
 
 /**
  * A dimmer hides distractions to focus attention on particular content.
@@ -67,7 +63,10 @@ export default class Dimmer extends Component {
     simple: PropTypes.bool,
   }
 
-  static _meta = _meta
+  static _meta = {
+    name: 'Dimmer',
+    type: META.TYPES.MODULE,
+  }
 
   static Dimmable = DimmerDimmable
 
@@ -83,9 +82,11 @@ export default class Dimmer extends Component {
     const { onClick, onClickOutside } = this.props
 
     if (onClick) onClick(e, this.props)
-    if (this.center && (this.center !== e.target && this.center.contains(e.target))) return
+    if (this.centerRef && (this.centerRef !== e.target && this.centerRef.contains(e.target))) return
     if (onClickOutside) onClickOutside(e, this.props)
   }
+
+  handleCenterRef = c => (this.centerRef = c)
 
   render() {
     const {
@@ -112,13 +113,19 @@ export default class Dimmer extends Component {
     const rest = getUnhandledProps(Dimmer, this.props)
     const ElementType = getElementType(Dimmer, this.props)
 
-    const childrenJSX = (children || content) && (
-        <div className='content'>
-          <div className='center' ref={center => (this.center = center)}>
-            { children || content }
+    const childrenContent = _.isNil(children) ? content : children
+
+    const dimmerElement = (
+      <ElementType{...rest} className={classes} onClick={this.handleClick}>
+        {childrenContent && (
+          <div className='content'>
+            <div className='center' ref={this.handleCenterRef}>
+              {childrenContent}
+            </div>
           </div>
-        </div>
-      )
+        )}
+      </ElementType>
+    )
 
     if (page) {
       return (
@@ -130,15 +137,13 @@ export default class Dimmer extends Component {
           open={active}
           openOnTriggerClick={false}
         >
-          <ElementType{...rest} className={classes} onClick={this.handleClick}>{childrenJSX}</ElementType>
+          {dimmerElement}
         </Portal>
       )
     }
 
-    return <ElementType{...rest} className={classes} onClick={this.handleClick}>{childrenJSX}</ElementType>
+    return dimmerElement
   }
 }
 
-// Dimmer is not yet defined inside the class
-// Do not use a static property initializer
 Dimmer.create = createShorthandFactory(Dimmer, value => ({ content: value }))

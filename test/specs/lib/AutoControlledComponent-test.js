@@ -19,9 +19,11 @@ const createTestClass = (options = {}) => class Test extends AutoControlledCompo
 
 const toDefaultName = (prop) => `default${prop.slice(0, 1).toUpperCase() + prop.slice(1)}`
 
-const makeProps = () => _.transform(_.times(_.random(3, 10)), (res) => {
-  res[_.camelCase(faker.hacker.noun())] = faker.hacker.verb()
-}, {})
+const makeProps = () => ({
+  computer: 'hardware',
+  flux: 'capacitor',
+  ion: 'belt',
+})
 
 const makeDefaultProps = (props) => _.transform(props, (res, val, key) => {
   res[toDefaultName(key)] = val
@@ -30,6 +32,11 @@ const makeDefaultProps = (props) => _.transform(props, (res, val, key) => {
 describe('extending AutoControlledComponent', () => {
   beforeEach(() => {
     TestClass = createTestClass({ autoControlledProps: [], state: {} })
+  })
+
+  it('does not throw with a `null` state', () => {
+    TestClass = createTestClass({ autoControlledProps: [], state: null })
+    shallow(<TestClass />)
   })
 
   describe('trySetState', () => {
@@ -167,7 +174,27 @@ describe('extending AutoControlledComponent', () => {
       _.each(props, (val, key) => wrapper.should.not.have.state(key, val))
     })
 
-    it('uses the default prop is the regular prop is undefined', () => {
+    it('includes non autoControlled state', () => {
+      const props = makeProps()
+
+      TestClass = createTestClass({ autoControlledProps: [], state: { foo: 'bar' } })
+      shallow(<TestClass {...props} />)
+        .should.have.state('foo', 'bar')
+    })
+
+    it('uses the initial state if default and regular props are undefined', () => {
+      consoleUtil.disableOnce()
+
+      const defaultProps = { defaultFoo: undefined }
+      const autoControlledProps = ['foo']
+
+      TestClass = createTestClass({ autoControlledProps, defaultProps, state: { foo: 'bar' } })
+
+      shallow(<TestClass foo={undefined} />)
+        .should.have.state('foo', 'bar')
+    })
+
+    it('uses the default prop if the regular prop is undefined', () => {
       consoleUtil.disableOnce()
 
       const defaultProps = { defaultFoo: 'default' }

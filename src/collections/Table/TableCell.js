@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import cx from 'classnames'
 import React, { PropTypes } from 'react'
 
@@ -15,6 +16,9 @@ import {
 } from '../../lib'
 import Icon from '../../elements/Icon'
 
+/**
+ * A table row can have cells.
+ */
 function TableCell(props) {
   const {
     active,
@@ -53,7 +57,7 @@ function TableCell(props) {
   const rest = getUnhandledProps(TableCell, props)
   const ElementType = getElementType(TableCell, props)
 
-  if (children) {
+  if (!_.isNil(children)) {
     return <ElementType {...rest} className={classes}>{children}</ElementType>
   }
 
@@ -69,11 +73,6 @@ TableCell._meta = {
   name: 'TableCell',
   type: META.TYPES.COLLECTION,
   parent: 'Table',
-  props: {
-    textAlign: SUI.TEXT_ALIGNMENTS,
-    verticalAlign: SUI.VERTICAL_ALIGNMENTS,
-    width: SUI.WIDTHS,
-  },
 }
 
 TableCell.defaultProps = {
@@ -121,18 +120,18 @@ TableCell.propTypes = {
   singleLine: PropTypes.bool,
 
   /** A table cell can adjust its text alignment. */
-  textAlign: PropTypes.oneOf(TableCell._meta.props.textAlign),
+  textAlign: PropTypes.oneOf(_.without(SUI.TEXT_ALIGNMENTS, 'justified')),
 
   /** A table cell can adjust its text alignment. */
-  verticalAlign: PropTypes.oneOf(TableCell._meta.props.verticalAlign),
+  verticalAlign: PropTypes.oneOf(SUI.VERTICAL_ALIGNMENTS),
 
   /** A cell may warn a user. */
   warning: PropTypes.bool,
 
   /** A table can specify the width of individual columns independently. */
-  width: PropTypes.oneOf(TableCell._meta.props.width),
+  width: PropTypes.oneOf(SUI.WIDTHS),
 }
 
-TableCell.create = createShorthandFactory(TableCell, content => ({ content }))
+TableCell.create = createShorthandFactory(TableCell, content => ({ content }), true)
 
 export default TableCell

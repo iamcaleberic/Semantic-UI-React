@@ -1,25 +1,6 @@
 import React from 'react'
 import { Table } from 'semantic-ui-react'
 
-const headerRow = [
-  'Name',
-  'Status',
-  'Notes',
-]
-
-const renderBodyRow = ({ name, status, notes }) => ({
-  warning: !!(status && status.match('Requires Action')),
-  cells: [
-    name || 'No name specified',
-    status
-      ? { icon: 'attention', content: status }
-      : 'Unknown',
-    notes
-      ? { icon: 'attention', content: notes, warning: true }
-      : 'None',
-  ],
-})
-
 const tableData = [
   { name: undefined, status: undefined, notes: undefined },
   { name: 'Jimmy', status: 'Requires Action', notes: undefined },
@@ -27,10 +8,33 @@ const tableData = [
   { name: 'Jill', status: undefined, notes: undefined },
 ]
 
-const TableExampleWarningShorthand = () => {
-  return (
-    <Table celled headerRow={headerRow} renderBodyRow={renderBodyRow} tableData={tableData} />
-  )
-}
+const headerRow = [
+  'Name',
+  'Status',
+  'Notes',
+]
+
+const renderBodyRow = ({ name, status, notes }, i) => ({
+  key: name || `row-${i}`,
+  warning: !!(status && status.match('Requires Action')),
+  cells: [
+    name || 'No name specified',
+    status
+      ? { key: 'status', icon: 'attention', content: status }
+      : 'Unknown',
+    notes
+      ? { key: 'notes', icon: 'attention', content: notes, warning: true }
+      : 'None',
+  ],
+})
+
+const TableExampleWarningShorthand = () => (
+  <Table
+    celled
+    headerRow={headerRow}
+    renderBodyRow={renderBodyRow}
+    tableData={tableData}
+  />
+)
 
 export default TableExampleWarningShorthand

@@ -1,4 +1,5 @@
 import cx from 'classnames'
+import _ from 'lodash'
 import React, { PropTypes } from 'react'
 
 import {
@@ -9,13 +10,22 @@ import {
 } from '../../lib'
 import Icon from '../../elements/Icon'
 
+/**
+ * A dropdown menu can contain a header.
+ */
 function DropdownHeader(props) {
-  const { children, className, content, icon } = props
+  const {
+    children,
+    className,
+    content,
+    icon,
+  } = props
+
   const classes = cx('header', className)
   const rest = getUnhandledProps(DropdownHeader, props)
   const ElementType = getElementType(DropdownHeader, props)
 
-  if (children) {
+  if (!_.isNil(children)) {
     return <ElementType {...rest} className={classes}>{children}</ElementType>
   }
 

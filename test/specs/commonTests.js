@@ -4,7 +4,12 @@ import path from 'path'
 import React, { createElement, isValidElement } from 'react'
 import ReactDOMServer from 'react-dom/server'
 
-import { createShorthand, META, numberToWord } from 'src/lib'
+import {
+  createShorthand,
+  META,
+  numberToWord,
+  SUI,
+} from 'src/lib'
 import { consoleUtil, sandbox, syntheticEvent } from 'test/utils'
 import * as semanticUIReact from 'semantic-ui-react'
 
@@ -254,6 +259,27 @@ export const isConformant = (Component, options = {}) => {
     })
   })
 
+  describe('handles props', () => {
+    it('defines handled props in Component.handledProps', () => {
+      Component.should.have.any.keys('handledProps')
+      Component.handledProps.should.be.an('array')
+    })
+
+    it('Component.handledProps includes all handled props', () => {
+      const computedProps = _.union(
+        Component.autoControlledProps,
+        _.keys(Component.defaultProps),
+        _.keys(Component.propTypes),
+      )
+      const expectedProps = _.uniq(computedProps).sort()
+
+      Component.handledProps.should.to.deep.equal(expectedProps,
+        'It seems that not all props were defined in Component.handledProps, you need to check that they are equal ' +
+        'to the union of Component.autoControlledProps and keys of Component.defaultProps and Component.propTypes'
+      )
+    })
+  })
+
   // ----------------------------------------
   // Events
   // ----------------------------------------
@@ -428,24 +454,6 @@ export const hasSubComponents = (Component, subComponents) => {
 }
 
 /**
- * Assert a component can be receive focus via the tab key.
- * @param {React.Component|Function} Component The Component.
- * @param {Object} [options={}]
- * @param {Object} [options.requiredProps={}] Props required to render the component.
- */
-export const isTabbable = (Component, options = {}) => {
-  const { requiredProps = {} } = options
-  const { assertRequired } = commonTestHelpers('isTabbable', Component)
-
-  it('is tabbable', () => {
-    assertRequired(Component, 'a `Component`')
-
-    shallow(<Component {...requiredProps} />)
-      .should.have.attr('tabindex', '0')
-  })
-}
-
-/**
  * Assert a component renders children somewhere in the tree.
  * @param {React.Component|Function} Component A component that should render children.
  * @param {Object} [options={}]
@@ -468,41 +476,36 @@ export const rendersChildren = (Component, options = {}) => {
     shallow(createElement(Component, requiredProps, child))
       .should.contain(child)
   })
+
+  it('renders child number with 0 value', () => {
+    shallow(createElement(Component, requiredProps, 0))
+      .should.contain.text('0')
+  })
 }
 
 // ----------------------------------------
 // className from prop
 // ----------------------------------------
-const _definesPropOptions = (Component, propKey) => {
-  it(`defines ${propKey} options in Component._meta.props`, () => {
-    Component.should.have.any.keys('_meta')
-    Component._meta.should.have.any.keys('props')
-    Component._meta.props.should.have.any.keys(propKey)
-    Component._meta.props[propKey].should.be.an('array')
-  })
-}
-
-const _noDefaultClassNameFromProp = (Component, propKey, options = {}) => {
+const _noDefaultClassNameFromProp = (Component, propKey, propValues, options = {}) => {
+  const { defaultProps = {} } = Component
   const { className = propKey, requiredProps = {} } = options
   // required props may include a prop that creates a className
   // if so, we cannot assert that it doesn't exist by default because it is required to exist
   // skip assertions for required props
+  if (propKey in defaultProps) return
   if (propKey in requiredProps) return
 
   it('is not included in className when not defined', () => {
     const wrapper = shallow(<Component {...requiredProps} />)
     wrapper.should.not.have.className(className)
 
-    // not all component props define prop options in _meta.props
-    // if they do, ensure that none of the prop option values are in className
+    // ensure that none of the prop option values are in className
     // SUI classes ought to be built up using a declarative component API
-    _.each(_.get(Component, `_meta.props[${propKey}]`), propVal => {
-      wrapper.should.not.have.className(propVal.toString())
-    })
+    propValues.forEach(propValue => wrapper.should.not.have.className(propValue.toString()))
   })
 }
 
-const _noClassNameFromBoolProps = (Component, propKey, options = {}) => {
+const _noClassNameFromBoolProps = (Component, propKey, propValues, options = {}) => {
   const { className = propKey, requiredProps = {} } = options
 
   _.each([true, false], bool => it(`does not add any className when ${bool}`, () => {
@@ -515,16 +518,14 @@ const _noClassNameFromBoolProps = (Component, propKey, options = {}) => {
     wrapper.should.not.have.className('true')
     wrapper.should.not.have.className('false')
 
-    _.each(_.get(Component, `_meta.props[${propKey}]`), propVal => {
-      wrapper.should.not.have.className(propVal.toString())
-    })
+    propValues.forEach(propVal => wrapper.should.not.have.className(propVal.toString()))
   }))
 }
 
-const _classNamePropValueBeforePropName = (Component, propKey, options = {}) => {
+const _classNamePropValueBeforePropName = (Component, propKey, propValues, options = {}) => {
   const { className = propKey, requiredProps = {} } = options
 
-  _.each(_.get(Component, `_meta.props[${propKey}]`), (propVal) => {
+  propValues.forEach(propVal => {
     it(`adds "${propVal} ${className}" to className`, () => {
       shallow(createElement(Component, { ...requiredProps, [propKey]: propVal }))
         .should.have.className(`${propVal} ${className}`)
@@ -549,6 +550,10 @@ export const implementsCreateMethod = (Component) => {
     })
     it(`creates a ${name} from a number`, () => {
       isValidElement(Component.create(123))
+        .should.equal(true)
+    })
+    it(`creates a ${name} from a number 0`, () => {
+      isValidElement(Component.create(0))
         .should.equal(true)
     })
     it(`creates a ${name} from a props object`, () => {
@@ -587,6 +592,7 @@ export const implementsCreateMethod = (Component) => {
 /**
  * Assert that a Component correctly implements a width prop.
  * @param {React.Component|Function} Component The component to test.
+ * @param {array} [widths] Array of possible widths.
  * @param {object} [options={}]
  * @param {string} [options.propKey] The prop name that accepts a width value.
  * @param {string} [options.widthClass] The className that follows the wordToNumber className.
@@ -594,19 +600,20 @@ export const implementsCreateMethod = (Component) => {
  * @param {boolean} [options.canEqual=true] Whether or not to test 'equal width' usage.
  * @param {Object} [options.requiredProps={}] Props required to render the component.
  */
-export const implementsWidthProp = (Component, options = {}) => {
+export const implementsWidthProp = (Component, widths = SUI.WIDTHS, options = {}) => {
   const { assertRequired } = commonTestHelpers('implementsWidthProp', Component)
+  const { canEqual = true, propKey, requiredProps, widthClass } = options
 
-  const { propKey, widthClass, canEqual = true, requiredProps } = options
+  const propValues = canEqual ? [...widths, 'equal'] : widths
+
   describe(`${propKey} (common)`, () => {
     assertRequired(Component, 'a `Component`')
 
-    _definesPropOptions(Component, propKey)
-    _noDefaultClassNameFromProp(Component, propKey, options)
-    _noClassNameFromBoolProps(Component, propKey, options)
+    _noDefaultClassNameFromProp(Component, propKey, propValues, options)
+    _noClassNameFromBoolProps(Component, propKey, propValues, options)
 
     it('adds numberToWord value to className', () => {
-      _.without(_.get(Component, `_meta.props[${propKey}]`), 'equal').forEach((width) => {
+      widths.forEach(width => {
         const expectClass = widthClass ? `${numberToWord(width)} ${widthClass}` : numberToWord(width)
 
         shallow(createElement(Component, { ...requiredProps, [propKey]: width }))
@@ -670,7 +677,7 @@ export const implementsShorthandProp = (Component, options = {}) => {
           .should.have.descendants(name)
       })
     } else {
-      _noDefaultClassNameFromProp(Component, propKey, options)
+      _noDefaultClassNameFromProp(Component, propKey, [], options)
 
       it(`has no ${name} when not defined`, () => {
         shallow(<Component {...requiredProps} />)
@@ -694,6 +701,15 @@ export const implementsShorthandProp = (Component, options = {}) => {
       consoleUtil.disableOnce()
       assertValidShorthand(123)
     })
+
+    // the Input maps shorthand to `type`
+    // React uses the default prop ('text') in place of type={0}
+    if (propKey !== 'input') {
+      it(`renders a ${name} from number 0`, () => {
+        consoleUtil.disableOnce()
+        assertValidShorthand(0)
+      })
+    }
 
     it(`renders a ${name} from a props object`, () => {
       consoleUtil.disableOnce()
@@ -843,32 +859,32 @@ export const implementsImageProp = (Component, options = {}) => {
 /**
  * Assert that a Component correctly implements the "textAlign" prop.
  * @param {React.Component|Function} Component The component to test.
+ * @param {array} [alignments] Array of possible alignment positions.
  * @param {Object} [options={}]
  * @param {Object} [options.requiredProps={}] Props required to render the component.
  */
-export const implementsTextAlignProp = (Component, options = {}) => {
+export const implementsTextAlignProp = (Component, alignments = SUI.TEXT_ALIGNMENTS, options = {}) => {
   const { requiredProps = {} } = options
   const { assertRequired } = commonTestHelpers('implementsTextAlignProp', Component)
 
   describe('aligned (common)', () => {
     assertRequired(Component, 'a `Component`')
 
-    _definesPropOptions(Component, 'textAlign')
-    _noDefaultClassNameFromProp(Component, 'textAlign', options)
-    _noClassNameFromBoolProps(Component, 'textAlign', options)
+    _noDefaultClassNameFromProp(Component, 'textAlign', alignments, options)
+    _noClassNameFromBoolProps(Component, 'textAlign', alignments, options)
 
-    _.each(Component._meta.props.aligned, (propVal) => {
+    alignments.forEach(propVal => {
       if (propVal === 'justified') {
         it('adds "justified" without "aligned" to className', () => {
-          shallow(<Component { ...requiredProps } aligned='justified' />)
+          shallow(<Component { ...requiredProps } textAlign='justified' />)
             .should.have.className('justified')
 
-          shallow(<Component { ...requiredProps } aligned='justified' />)
+          shallow(<Component { ...requiredProps } textAlign='justified' />)
             .should.not.have.className('aligned')
         })
       } else {
         it(`adds "${propVal} aligned" to className`, () => {
-          shallow(<Component { ...requiredProps } aligned={propVal} />)
+          shallow(<Component { ...requiredProps } textAlign={propVal} />)
             .should.have.className(`${propVal} ${'aligned'}`)
         })
       }
@@ -879,21 +895,21 @@ export const implementsTextAlignProp = (Component, options = {}) => {
 /**
  * Assert that a Component correctly implements the "verticalAlign" prop.
  * @param {React.Component|Function} Component The component to test.
+ * @param {array} [alignments] Array of possible alignment positions.
  * @param {Object} [options={}]
  * @param {Object} [options.requiredProps={}] Props required to render the component.
  */
-export const implementsVerticalAlignProp = (Component, options = {}) => {
+export const implementsVerticalAlignProp = (Component, alignments = SUI.VERTICAL_ALIGNMENTS, options = {}) => {
   const { requiredProps = {} } = options
   const { assertRequired } = commonTestHelpers('implementsVerticalAlignProp', Component)
 
   describe('verticalAlign (common)', () => {
     assertRequired(Component, 'a `Component`')
 
-    _definesPropOptions(Component, 'verticalAlign')
-    _noDefaultClassNameFromProp(Component, 'verticalAlign', options)
-    _noClassNameFromBoolProps(Component, 'verticalAlign', options)
+    _noDefaultClassNameFromProp(Component, 'verticalAlign', alignments, options)
+    _noClassNameFromBoolProps(Component, 'verticalAlign', alignments, options)
 
-    _.each(Component._meta.props.verticalAlign, (propVal) => {
+    alignments.forEach(propVal => {
       it(`adds "${propVal} aligned" to className`, () => {
         shallow(<Component { ...requiredProps } verticalAlign={propVal} />)
           .should.have.className(`${propVal} ${'aligned'}`)
@@ -918,7 +934,7 @@ export const propKeyOnlyToClassName = (Component, propKey, options = {}) => {
     assertRequired(Component, 'a `Component`')
     assertRequired(propKey, 'a `propKey`')
 
-    _noDefaultClassNameFromProp(Component, propKey, options)
+    _noDefaultClassNameFromProp(Component, propKey, [], options)
 
     it('adds prop name to className', () => {
       shallow(createElement(Component, { ...requiredProps, [propKey]: true }))
@@ -940,11 +956,12 @@ export const propKeyOnlyToClassName = (Component, propKey, options = {}) => {
  * Assert that only a Component prop's value is converted to className.
  * @param {React.Component|Function} Component The component to test.
  * @param {String} propKey A props key.
+ * @param {array} propValues Array of possible props values.
  * @param {Object} [options={}]
  * @param {Object} [options.requiredProps={}] Props required to render the component.
  * @param {Object} [options.className=propKey] The className to assert exists.
  */
-export const propValueOnlyToClassName = (Component, propKey, options = {}) => {
+export const propValueOnlyToClassName = (Component, propKey, propValues, options = {}) => {
   const { requiredProps = {} } = options
   const { assertRequired } = commonTestHelpers('propValueOnlyToClassName', Component)
 
@@ -952,12 +969,11 @@ export const propValueOnlyToClassName = (Component, propKey, options = {}) => {
     assertRequired(Component, 'a `Component`')
     assertRequired(propKey, 'a `propKey`')
 
-    _definesPropOptions(Component, propKey)
-    _noDefaultClassNameFromProp(Component, propKey, options)
-    _noClassNameFromBoolProps(Component, propKey, options)
+    _noDefaultClassNameFromProp(Component, propKey, propValues, options)
+    _noClassNameFromBoolProps(Component, propKey, propValues, options)
 
     it('adds prop value to className', () => {
-      _.each(_.get(Component, `_meta.props[${propKey}]`), propValue => {
+      propValues.forEach(propValue => {
         shallow(createElement(Component, { ...requiredProps, [propKey]: propValue }))
           .should.have.className(propValue)
       })
@@ -967,7 +983,7 @@ export const propValueOnlyToClassName = (Component, propKey, options = {}) => {
       // silence propType warnings
       consoleUtil.disableOnce()
 
-      _.each(_.get(Component, `_meta.props[${propKey}]`), propValue => {
+      propValues.forEach(propValue => {
         shallow(createElement(Component, { ...requiredProps, [propKey]: propValue }))
           .should.not.have.className(propKey)
       })
@@ -979,21 +995,21 @@ export const propValueOnlyToClassName = (Component, propKey, options = {}) => {
  * Assert that a Component prop's name and value are required to create a className.
  * @param {React.Component|Function} Component The component to test.
  * @param {String} propKey A props key.
+ * @param {array} propValues Array of possible values of prop.
  * @param {Object} [options={}]
  * @param {Object} [options.requiredProps={}] Props required to render the component.
  * @param {Object} [options.className=propKey] The className to assert exists.
  */
-export const propKeyAndValueToClassName = (Component, propKey, options = {}) => {
+export const propKeyAndValueToClassName = (Component, propKey, propValues, options = {}) => {
   const { assertRequired } = commonTestHelpers('propKeyAndValueToClassName', Component)
 
   describe(`${propKey} (common)`, () => {
     assertRequired(Component, 'a `Component`')
     assertRequired(propKey, 'a `propKey`')
 
-    _definesPropOptions(Component, propKey)
-    _noDefaultClassNameFromProp(Component, propKey, options)
-    _noClassNameFromBoolProps(Component, propKey, options)
-    _classNamePropValueBeforePropName(Component, propKey, options)
+    _noDefaultClassNameFromProp(Component, propKey, propValues, options)
+    _noClassNameFromBoolProps(Component, propKey, propValues, options)
+    _classNamePropValueBeforePropName(Component, propKey, propValues, options)
   })
 }
 
@@ -1001,11 +1017,12 @@ export const propKeyAndValueToClassName = (Component, propKey, options = {}) => 
  * Assert that a Component prop name or value convert to a className.
  * @param {React.Component|Function} Component The component to test.
  * @param {String} propKey A props key.
+ * @param {array} propValues Array of possible values of prop.
  * @param {Object} [options={}]
  * @param {Object} [options.requiredProps={}] Props required to render the component.
  * @param {Object} [options.className=propKey] The className to assert exists.
  */
-export const propKeyOrValueAndKeyToClassName = (Component, propKey, options = {}) => {
+export const propKeyOrValueAndKeyToClassName = (Component, propKey, propValues, options = {}) => {
   const { className = propKey, requiredProps = {} } = options
   const { assertRequired } = commonTestHelpers('propKeyOrValueAndKeyToClassName', Component)
 
@@ -1013,9 +1030,8 @@ export const propKeyOrValueAndKeyToClassName = (Component, propKey, options = {}
     assertRequired(Component, 'a `Component`')
     assertRequired(propKey, 'a `propKey`')
 
-    _definesPropOptions(Component, propKey)
-    _noDefaultClassNameFromProp(Component, propKey, options)
-    _classNamePropValueBeforePropName(Component, propKey, options)
+    _noDefaultClassNameFromProp(Component, propKey, propValues, options)
+    _classNamePropValueBeforePropName(Component, propKey, propValues, options)
     beforeEach(() => {
       // silence propType warnings
       consoleUtil.disableOnce()
@@ -1033,7 +1049,7 @@ export const propKeyOrValueAndKeyToClassName = (Component, propKey, options = {}
       wrapper.should.not.have.className('true')
       wrapper.should.not.have.className('false')
 
-      _.each(_.get(Component, `_meta.props[${propKey}]`), propVal => {
+      _.each(propValues, propVal => {
         wrapper.should.not.have.className(propVal)
       })
     })

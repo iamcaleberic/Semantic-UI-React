@@ -1,5 +1,6 @@
-import React, { PropTypes } from 'react'
 import cx from 'classnames'
+import _ from 'lodash'
+import React, { PropTypes } from 'react'
 
 import {
   createShorthand,
@@ -11,13 +12,16 @@ import {
 import StepDescription from './StepDescription'
 import StepTitle from './StepTitle'
 
+/**
+ * A step can contain a content.
+ */
 function StepContent(props) {
   const { children, className, description, title } = props
-  const classes = cx(className, 'content')
+  const classes = cx('content', className)
   const rest = getUnhandledProps(StepContent, props)
   const ElementType = getElementType(StepContent, props)
 
-  if (children) {
+  if (!_.isNil(children)) {
     return <ElementType {...rest} className={classes}>{children}</ElementType>
   }
 
