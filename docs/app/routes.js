@@ -57,7 +57,7 @@ const routes = (
       <Route path='*' component={PageNotFound} />
     </Route>
   </Route>
-=======
+
 const RedirectToIntro = () => <Redirect to='introduction' />
 
 const Router = () => (
@@ -75,7 +75,6 @@ const Router = () => (
       </Layout>
     </Switch>
   </BrowserRouter>
->>>>>>> 67c737f325373f9486647069a56d4a795475e1cd
 )
 
 export default Router
