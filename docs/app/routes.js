@@ -57,6 +57,7 @@ const routes = (
       <Route path='*' component={PageNotFound} />
     </Route>
   </Route>
+)
 
 const RedirectToIntro = () => <Redirect to='introduction' />
 
