@@ -1,5 +1,6 @@
 import _ from 'lodash/fp'
-import React, { Component, PropTypes } from 'react'
+import PropTypes from 'prop-types'
+import React, { Component } from 'react'
 import { findDOMNode } from 'react-dom'
 import { NavLink } from 'react-router-dom'
 import { withRouter } from 'react-router'
@@ -182,7 +183,7 @@ class Sidebar extends Component {
         <Menu.Item>
           <Logo spaced='right' size='mini' />
           <strong>
-            Semantic-UI-React &nbsp;
+            Semantic UI React &nbsp;
             <small><em>{pkg.version}</em></small>
           </strong>
         </Menu.Item>
@@ -195,7 +196,7 @@ class Sidebar extends Component {
             <Menu.Item as={NavLink} to='/usage' activeClassName='active'>
               Usage
             </Menu.Item>
-            <Menu.Item as={Link} to='/layouts' activeClassName='active'>
+            <Menu.Item as={NavLink} to='/layouts' activeClassName='active'>
               Layouts
             </Menu.Item>
             <Menu.Item as='a' href={repoURL}>
