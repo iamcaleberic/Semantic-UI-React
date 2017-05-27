@@ -11,7 +11,7 @@ import Layout from './Components/Layout'
 import ExternalExampleLayout from './Components/ExternalExampleLayout'
 import Introduction from './Views/Introduction'
 import Usage from './Views/Usage'
-import LayoutsExample from './Components/LayoutsExample/LayoutsExample'
+import LayoutsExample from './Views/Layouts'
 import PageNotFound from './Views/PageNotFound'
 
 const RedirectToIntro = () => <Redirect to='introduction' />
