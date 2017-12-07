@@ -1,7 +1,6 @@
-const parseDocBlock = require('./parseDocBlock')
-const parseType = require('./parseType')
-
-module.exports = {
-  parseDocBlock,
-  parseType,
-}
+export parseDefaultValue from './parseDefaultValue'
+export parseDocBlock from './parseDocBlock'
+export parseDocExample from './parseDocExample'
+export parseDocSection from './parseDocSection'
+export parserCustomHandler from './parserCustomHandler'
+export parseType from './parseType'

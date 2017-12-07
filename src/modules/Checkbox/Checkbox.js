@@ -9,11 +9,13 @@ import {
   customPropTypes,
   getElementType,
   getUnhandledProps,
+  htmlInputAttrs,
   makeDebugger,
   META,
-  partitionHTMLInputProps,
+  partitionHTMLProps,
   useKeyOnly,
 } from '../../lib'
+
 const debug = makeDebugger('checkbox')
 
 /**
@@ -152,19 +154,19 @@ export default class Checkbox extends Component {
 
   handleInputRef = c => (this.inputRef = c)
 
-  handleClick = e => {
+  handleClick = (e) => {
     debug('handleClick()')
     const { checked, indeterminate } = this.state
 
     if (!this.canToggle()) return
 
-    _.invoke(this.props, 'onClick', e, { ...this.props, checked: !!checked, indeterminate: !!indeterminate })
+    _.invoke(this.props, 'onClick', e, { ...this.props, checked: !checked, indeterminate: !!indeterminate })
     _.invoke(this.props, 'onChange', e, { ...this.props, checked: !checked, indeterminate: false })
 
     this.trySetState({ checked: !checked, indeterminate: false })
   }
 
-  handleMouseDown = e => {
+  handleMouseDown = (e) => {
     debug('handleMouseDown()')
     const { checked, indeterminate } = this.state
 
@@ -211,11 +213,12 @@ export default class Checkbox extends Component {
       useKeyOnly(slider, 'slider'),
       useKeyOnly(toggle, 'toggle'),
       'checkbox',
-      className
+      className,
     )
     const unhandled = getUnhandledProps(Checkbox, this.props)
     const ElementType = getElementType(Checkbox, this.props)
-    const [htmlInputProps, rest] = partitionHTMLInputProps(unhandled, { htmlProps: [] })
+    const [htmlInputProps, rest] = partitionHTMLProps(unhandled, { htmlProps: htmlInputAttrs })
+    const id = _.get(htmlInputProps, 'id')
 
     return (
       <ElementType
@@ -240,7 +243,7 @@ export default class Checkbox extends Component {
          Heads Up!
          Do not remove empty labels, they are required by SUI CSS
          */}
-        {createHTMLLabel(label) || <label />}
+        {createHTMLLabel(label, { defaultProps: { htmlFor: id } }) || <label htmlFor={id} />}
       </ElementType>
     )
   }
